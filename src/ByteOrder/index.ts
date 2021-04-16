@@ -1,4 +1,4 @@
-import { WriteMethod, WriteMethods, ByteOrderedBuffer } from './Methods'
+import { WriteMethod, WriteMethods, ByteOrderedBuffer, Nullable } from './Methods'
 import * as Constants from './Constants'
 import BigEndian from './BigEndian'
 import LittleEndian from './LittleEndian';
@@ -18,6 +18,7 @@ export {
 	WriteMethod,
 	WriteMethods,
 	ByteOrderedBuffer,
+	Nullable,
 
 	Constants,
 	native,

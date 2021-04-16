@@ -23,7 +23,7 @@ interface WriteMethods {
 	writeBoolean: WriteMethod<boolean>
 	writeString: WriteMethod<Nullable<string>>
 	writeArray: WriteMethod<Nullable<Array<any>>>
-	writeMap: WriteMethod<Nullable<Map<string, any>>>
+	writeMap: WriteMethod<Nullable<Map<string | number, any>>>
 	writeObject: WriteMethod<Nullable<any>>
 }
 
@@ -54,5 +54,6 @@ export {
 	ReadMethod,
 	WriteMethods,
 	ReadMethods,
-	Methods
+	Methods,
+	Nullable
 }
