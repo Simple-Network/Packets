@@ -1,11 +1,11 @@
 import Packet from './Packet'
-import PacketHandler from './PacketListener'
+import PacketListener from './PacketListener'
 import PacketBuffer from './PacketBuffer'
 import PacketManager from './PacketManager'
 
 export {
 	Packet,
-	PacketHandler,
+	PacketListener,
 	PacketBuffer,
 	PacketManager
 }
