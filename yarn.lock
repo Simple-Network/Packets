@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@simple-network/core@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@simple-network/core/-/core-1.0.0.tgz#ea3f457abbd807925781be26b9ad1f7f4405310b"
-  integrity sha512-vtvtx1MsfjPH6DkAZiHOxLH8YLSdHj15rijhbsmHX1XR1QvO4VBeqtQHIgS3o3jq4LR0hqxSW0wEZ3b/2XFr3A==
+"@simple-network/core@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@simple-network/core/-/core-1.0.1.tgz#fd78e38c17b7a9cb34f99f2c17a45e089213bf4e"
+  integrity sha512-yOYOXEF64xO6dUTqYlla6RPh6iPnlPSqxCK/2nPMHWE8hZwoIqdpufnpWPFcBz8xFTakHPThhT61JIqz+EDrFg==
 
 "@types/node@^14.14.41":
   version "14.14.41"
