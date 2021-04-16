@@ -1,5 +1,5 @@
 import { IdsToMethods, TypeIds, getType } from "./Constants";
-import { ByteOrderedBuffer, Methods } from "./Methods";
+import { ByteOrderedBuffer, Methods, Nullable } from "./Methods";
 
 export default abstract class Common implements Methods {
 
@@ -28,14 +28,17 @@ export default abstract class Common implements Methods {
 	}
 	
 	public writeString(buffer: ByteOrderedBuffer, value: string | undefined | null) {
-		const methods = buffer.methods
-		
-		if (value) {
-			const data = Buffer.from(value, 'utf-8')
+		const data = value ? Buffer.from(value, 'utf-8') : null
 
-			this.ensureWriteCapacity(buffer, data.byteLength + 2)
+		this.writeBytes(buffer, data)
+	}
+
+	public writeBytes(buffer: ByteOrderedBuffer, data: Buffer | undefined | null) {
+		const methods = buffer.methods
+
+		if (data) {
 			methods.writeShort(buffer, data.byteLength)
-			buffer.buffer.fill(data, buffer.writeOffset)
+			data.copy(buffer.buffer, buffer.writeOffset)
 			buffer.writeOffset += data.byteLength
 		} else methods.writeShort(buffer, -1)
 	}
@@ -91,15 +94,19 @@ export default abstract class Common implements Methods {
 	}
 
 	public readString(buffer: ByteOrderedBuffer): string | null {
+		const data = buffer.methods.readBytes(buffer)
+
+		return data ? data.toString('utf-8') : null
+	}
+
+	public readBytes(buffer: ByteOrderedBuffer): Buffer | null {
 		const methods = buffer.methods
 		const length = methods.readShort(buffer)
 
 		if (length < 0) return null
-
-		this.ensureReadCapacity(buffer, length)
 		const data = buffer.buffer.slice(buffer.readOffset, buffer.readOffset + length)
 		buffer.readOffset += length
-		return data.toString('utf-8')
+		return data
 	}
 
 	public readArray(buffer: ByteOrderedBuffer): Array<any> | null {

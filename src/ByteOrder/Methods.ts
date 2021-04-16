@@ -22,6 +22,7 @@ interface WriteMethods {
 	writeNull: WriteMethod<null>
 	writeBoolean: WriteMethod<boolean>
 	writeString: WriteMethod<Nullable<string>>
+	writeBytes: WriteMethod<Nullable<Buffer>>
 	writeArray: WriteMethod<Nullable<Array<any>>>
 	writeMap: WriteMethod<Nullable<Map<string | number, any>>>
 	writeObject: WriteMethod<Nullable<any>>
@@ -39,6 +40,7 @@ interface ReadMethods {
 	readNull: ReadMethod<null>
 	readBoolean: ReadMethod<boolean>
 	readString: ReadMethod<Nullable<string>>
+	readBytes: ReadMethod<Nullable<Buffer>>
 	readArray: ReadMethod<Nullable<Array<any>>>
 	readMap: ReadMethod<Nullable<Map<string, any>>>
 	readObject: ReadMethod<Nullable<any>>

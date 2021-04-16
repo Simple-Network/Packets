@@ -61,6 +61,10 @@ export default class PacketBuffer {
 		this._buffer.methods.writeString(this._buffer, value)
 	}
 
+	public writeBytes(value: Nullable<Buffer>) {
+		this._buffer.methods.writeBytes(this._buffer, value)
+	}
+
 	public writeArray(value: Nullable<Array<any>>) {
 		this._buffer.methods.writeArray(this._buffer, value)
 	}
@@ -103,6 +107,10 @@ export default class PacketBuffer {
 
 	public readString() {
 		return this._buffer.methods.readString(this._buffer)
+	}
+
+	public readBytes() {
+		return this._buffer.methods.readBytes(this._buffer)
 	}
 
 	public readArray() {
