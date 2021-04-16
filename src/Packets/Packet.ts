@@ -1,7 +1,7 @@
-import PacketBuffer from "./PacketBuffer";
-import PacketHandler from "./PacketHandler";
+import PacketBuffer from './PacketBuffer'
+import PacketListener from './PacketListener'
 
-export default abstract class Packet<HANDLER extends PacketHandler> {
+export default abstract class Packet<HANDLER extends PacketListener> {
 
 	public abstract write(buffer: PacketBuffer): Promise<void>
 
