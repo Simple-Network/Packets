@@ -116,4 +116,20 @@ export default class PacketBuffer {
 	public readMap() {
 		return this._buffer.methods.readMap(this._buffer)
 	}
+
+	public get buffer() {
+		return this._buffer.buffer
+	}
+
+	public get methods() {
+		return this._buffer.methods
+	}
+
+	public get writeOffset() {
+		return this._buffer.writeOffset
+	}
+
+	public get readOffset() {
+		return this._buffer.readOffset
+	}
 }
