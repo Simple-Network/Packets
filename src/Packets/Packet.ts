@@ -7,6 +7,6 @@ export default abstract class Packet<HANDLER extends PacketListener> {
 
 	public abstract read(buffer: PacketBuffer): Promise<void>
 
-	public abstract handle(hansdler: HANDLER): Promise<void>
+	public abstract handle(handler: HANDLER): Promise<void>
 
 }
