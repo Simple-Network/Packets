@@ -1,66 +1,190 @@
 import { IdsToMethods, TypeIds, getType } from "./Constants";
-import { ByteOrderedBuffer, Methods, WriteMethod, WriteMethods } from "./Methods";
+import { ByteOrderedBuffer, Methods } from "./Methods";
 
 export default abstract class Common implements Methods {
 
-	write(buffer: ByteOrderedBuffer, value: number, offset: number, writeType: boolean = false) {
+	public write(buffer: ByteOrderedBuffer, value: number, writeType: boolean = false) {
 		const methods = buffer.methods
 		const typeId = TypeIds[getType(value)]
 
 		if (writeType)
-			offset = methods.writeByte(buffer, typeId, offset)
-		offset = IdsToMethods[typeId].write(methods)(buffer, value, offset)
-		return offset
+			methods.writeByte(buffer, typeId)
+		IdsToMethods[typeId].write(methods)(buffer, value)
 	}
 
-	writeByte(buffer: ByteOrderedBuffer, value: number, offset: number) {
-		return buffer.writeInt8(value, offset)
+	public writeByte(buffer: ByteOrderedBuffer, value: number) {
+		this.ensureWriteCapacity(buffer, 1)
+		return buffer.buffer.writeInt8(value, buffer.writeOffset)
 	}
 
-	writeBoolean(buffer: ByteOrderedBuffer, value: boolean, offset: number) {
-		return buffer.writeInt8(value ? 1 : 0, offset)
-	}
-	
-	writeNull(buffer: ByteOrderedBuffer, _value: null, offset: number) {
-		return buffer.writeInt8(-1, offset)
+	public writeBoolean(buffer: ByteOrderedBuffer, value: boolean) {
+		this.ensureWriteCapacity(buffer, 1)
+		return buffer.buffer.writeInt8(value ? 1 : 0, buffer.writeOffset)
 	}
 	
-	writeString(buffer: ByteOrderedBuffer, value: string, offset: number) {
+	public writeNull(buffer: ByteOrderedBuffer, _value: null) {
+		this.ensureWriteCapacity(buffer, 1)
+		return buffer.buffer.writeInt8(-1, buffer.writeOffset)
+	}
+	
+	public writeString(buffer: ByteOrderedBuffer, value: string | undefined | null) {
 		const methods = buffer.methods
-		const data = Buffer.from(value, 'utf-8')
+		
+		if (value) {
+			const data = Buffer.from(value, 'utf-8')
 
-		offset = methods.writeShort(buffer, data.byteLength, offset)
-		buffer.fill(data, offset)
-		return offset + data.byteLength
+			this.ensureWriteCapacity(buffer, data.byteLength + 2)
+			methods.writeShort(buffer, data.byteLength)
+			buffer.buffer.fill(data, buffer.writeOffset)
+			buffer.writeOffset += data.byteLength
+		} else methods.writeShort(buffer, -1)
 	}
 
-	writeArray<T>(buffer: ByteOrderedBuffer, value: Array<T>, offset: number) {
+	public writeArray<T>(buffer: ByteOrderedBuffer, value: Array<T> | undefined | null) {
 		const methods = buffer.methods
 
-		offset = methods.writeShort(buffer, value.length, offset)
-		value.forEach(element => {
-			offset = methods.write(buffer, element, offset, true)
-		})
-		return offset
+		if (value) {
+			this.ensureWriteCapacity(buffer, 2)
+			methods.writeShort(buffer, value.length)
+			value.forEach(element => methods.write(buffer, element, true))
+		} else methods.writeShort(buffer, -1)
 	}
 
-	writeObject(buffer: ByteOrderedBuffer, value: any | Map<string | number, any>, offset: number) {
+	public writeObject(buffer: ByteOrderedBuffer, value: any | undefined | null) {
+		const entries = value ? Object.entries(value).filter(([_, entryValue]) => typeof entryValue !== 'function') : null
+
+		return this.writeEntries(buffer, entries)
+	}
+
+	public writeMap(buffer: ByteOrderedBuffer, value: Map<string | number, any> | undefined | null) {
+		let entries: [string, any][] | null = null
+
+		if (value) {
+			entries = []
+			value.forEach((value, key) => entries!.push([ key.toString(), value ]))
+		}
+
+		return this.writeEntries(buffer, entries)
+	}
+
+	public read(buffer: ByteOrderedBuffer): any {
 		const methods = buffer.methods
-		const entries = Object.entries(value).filter(([_, entryValue]) => typeof entryValue !== 'function')
+		const typeId = methods.readByte(buffer)
 
-		offset = methods.writeShort(buffer, entries.length, offset)
-		entries.forEach(([entryKey, entryvalue]) => {
-			offset = methods.writeString(buffer, entryKey, offset)
-			offset = methods.write(buffer, entryvalue, offset, true)
-		})
-		return offset
+		return IdsToMethods[typeId].read(methods)(buffer)
 	}
 
-	abstract writeShort(buffer: ByteOrderedBuffer, value: number, offset: number): number
-	abstract writeInt(buffer: ByteOrderedBuffer, value: number, offset: number): number
-	abstract writeFloat(buffer: ByteOrderedBuffer, value: number, offset: number): number
-	abstract writeDouble(buffer: ByteOrderedBuffer, value: number, offset: number): number
-	abstract writeLong(buffer: ByteOrderedBuffer, value: bigint, offset: number): number
+	public readByte(buffer: ByteOrderedBuffer): number {
+		this.ensureReadCapacity(buffer, 1)
+		return buffer.buffer.readInt8(buffer.readOffset)
+	}
+
+	public readBoolean(buffer: ByteOrderedBuffer): boolean {
+		this.ensureReadCapacity(buffer, 1)
+		return this.readByte(buffer) === 1
+	}
+
+	public readNull(buffer: ByteOrderedBuffer): null {
+		this.ensureReadCapacity(buffer, 1)
+		if (this.readByte(buffer) == -1) return null
+		throw new Error('Not null')
+	}
+
+	public readString(buffer: ByteOrderedBuffer): string | null {
+		const methods = buffer.methods
+		const length = methods.readShort(buffer)
+
+		if (length < 0) return null
+
+		this.ensureReadCapacity(buffer, length)
+		const data = buffer.buffer.slice(buffer.readOffset, buffer.readOffset + length)
+		buffer.readOffset += length
+		return data.toString('utf-8')
+	}
+
+	public readArray(buffer: ByteOrderedBuffer): Array<any> | null {
+		const methods = buffer.methods
+		const length = methods.readShort(buffer)
+
+		if (length < 0) return null
+		let result = []
+
+		for (let i = 0; i < length; i++) {
+			result.push(methods.read(buffer))
+		}
+		return result
+	}
+
+	public readObject(buffer: ByteOrderedBuffer): any | null {
+		const entries = this.readEntries(buffer)
+		const result: { [key: string]: any } = {}
+
+		if (entries) {
+			entries.forEach(([key, value]) => result[key] = value)
+			return result
+		}
+		return null
+	}
+
+	public readMap(buffer: ByteOrderedBuffer): Map<string, any> | null {
+		let entries = this.readEntries(buffer)
+
+		if (entries)
+			return new Map(entries)
+		return null
+	}
+
+	protected ensureWriteCapacity(buffer: ByteOrderedBuffer, size: number) {
+		while (buffer.writeOffset + size >= buffer.buffer.byteLength) {
+			buffer.resize()
+		}
+	}
+
+	protected ensureReadCapacity(buffer: ByteOrderedBuffer, size: number) {
+		if (buffer.readOffset + size > buffer.buffer.byteLength)
+			throw new Error(`Cannot read ${size} bytes, ${buffer.buffer.byteLength - buffer.readOffset} remaining`)
+	}
+
+	private writeEntries(buffer: ByteOrderedBuffer, entries: [string, any][] | null) {
+		const methods = buffer.methods
+
+		if (entries) {
+			methods.writeShort(buffer, entries.length)
+			entries.forEach(([entryKey, entryValue]) => {
+				methods.writeString(buffer, entryKey)
+				methods.write(buffer, entryValue, true)
+			})
+		} else methods.writeShort(buffer, -1)
+	}
+
+	private readEntries(buffer: ByteOrderedBuffer): [string, any][] | null {
+		const methods = buffer.methods
+		const length = methods.readShort(buffer)
+
+		if (length < 0) return null
+		let result: [string, any][] = []
+
+		for (let i = 0; i < length; i++) {
+			let key = methods.readString(buffer)
+			let value = methods.read(buffer)
+
+			if (key) result.push([ key, value ])
+		}
+		return result
+	}
+
+	abstract writeShort(buffer: ByteOrderedBuffer, value: number): void
+	abstract writeInt(buffer: ByteOrderedBuffer, value: number): void
+	abstract writeFloat(buffer: ByteOrderedBuffer, value: number): void
+	abstract writeDouble(buffer: ByteOrderedBuffer, value: number): void
+	abstract writeLong(buffer: ByteOrderedBuffer, value: bigint): void
+
+	abstract readShort(buffer: ByteOrderedBuffer): number
+	abstract readInt(buffer: ByteOrderedBuffer): number
+	abstract readFloat(buffer: ByteOrderedBuffer): number
+	abstract readDouble(buffer: ByteOrderedBuffer): number
+	abstract readLong(buffer: ByteOrderedBuffer): bigint
+
 	abstract invert(): Methods
 
 }
