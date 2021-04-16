@@ -1,5 +1,5 @@
 import { PacketFrameReader, PacketFrameWriter, PacketReader, PacketWriter  } from './Adapters'
-import { ByteOrderedBuffer, Constants, NATIVE_ENDIAN, Nullable, WriteMethod, WriteMethods, native } from './ByteOrder'
+import { Methods, ByteOrderedBuffer, Constants, NATIVE_ENDIAN, Nullable, WriteMethod, WriteMethods, native } from './ByteOrder'
 import { Packet, PacketBuffer, PacketHandler, PacketManager } from './Packets'
 
 export {
@@ -8,6 +8,7 @@ export {
 	PacketReader,
 	PacketWriter,
 
+	Methods,
 	ByteOrderedBuffer,
 	Constants,
 	NATIVE_ENDIAN,

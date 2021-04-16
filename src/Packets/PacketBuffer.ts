@@ -1,5 +1,5 @@
-import { NATIVE_ENDIAN } from "src/ByteOrder"
-import { ByteOrderedBuffer, Methods, Nullable } from "src/ByteOrder/Methods"
+import { NATIVE_ENDIAN } from 'src/ByteOrder'
+import { ByteOrderedBuffer, Methods, Nullable } from 'src/ByteOrder/Methods'
 
 export default class PacketBuffer {
 
@@ -9,12 +9,22 @@ export default class PacketBuffer {
 
 	constructor()
 	constructor(data: number)
+	constructor(data: Methods)
 	constructor(data: Buffer, methods: Methods)
-	constructor(data?: Buffer | number, methods?: Methods) {
-		const buffer = typeof data == 'number' ? Buffer.alloc(data) : (data instanceof Buffer ? data : Buffer.alloc(PacketBuffer.DEFAULT_BUFFER_SIZE))
+	constructor(data?: Buffer | number | Methods, methods?: Methods) {
+		let buffer: Buffer;
+
+		if (typeof data === 'number') {
+			buffer = Buffer.alloc(data)
+		} else if (typeof data === 'undefined')
+			buffer = Buffer.alloc(PacketBuffer.DEFAULT_BUFFER_SIZE)
+		else {
+			if (data instanceof Buffer) buffer = data;
+			else methods = data
+		}
 
 		this._buffer = {
-			buffer,
+			buffer: buffer!,
 			methods: methods || NATIVE_ENDIAN,
 			writeOffset: 0,
 			readOffset: 0,

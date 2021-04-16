@@ -1,6 +1,6 @@
-import Common from "./Common";
-import LittleEndian from "./LittleEndian";
-import { ByteOrderedBuffer, Methods, WriteMethods } from "./Methods";
+import Common from './Common'
+import LittleEndian from './LittleEndian'
+import { ByteOrderedBuffer, Methods } from './Methods'
 
 export default class BigEndian extends Common {
 

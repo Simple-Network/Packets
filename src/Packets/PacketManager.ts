@@ -1,4 +1,4 @@
-import Packet from "./Packet"
+import Packet from './Packet'
 
 type PacketConstructor = new () => Packet<any>
 

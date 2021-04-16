@@ -1,5 +1,5 @@
-import { IdsToMethods, TypeIds, getType } from "./Constants";
-import { ByteOrderedBuffer, Methods, Nullable } from "./Methods";
+import { IdsToMethods, TypeIds, getType } from './Constants'
+import { ByteOrderedBuffer, Methods } from './Methods'
 
 export default abstract class Common implements Methods {
 
